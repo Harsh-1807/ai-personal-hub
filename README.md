@@ -2,7 +2,8 @@
 
 Unified personal assistant that connects Local Files, GitHub, YouTube, Gmail, Steam, and Summarization through Model Context Protocol (MCP), with a clean Flask UI and LM Studio integration.
 
-![AI Personal Hub](../image.png)
+<img width="1852" height="956" alt="image" src="https://github.com/user-attachments/assets/e503de4a-5218-4988-a81f-64a04221a3e4" />
+
 
 ## Features
 
