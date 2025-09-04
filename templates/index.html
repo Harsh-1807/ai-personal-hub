@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>AI Personal Hub</title>
+		<style>
+			:root {
+				--bg: #0b1020;
+				--panel: #121a2b;
+				--muted: #9bb0c8;
+				--text: #e8f1ff;
+				--accent: #5b9cff;
+				--accent-2: #00d4ff;
+			}
+			* { box-sizing: border-box; }
+			body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: linear-gradient(180deg, #0b1020, #0d1530 40%, #0b1020); color: var(--text); overflow-x: hidden; }
+			.container { max-width: 960px; margin: 0 auto; padding: 24px; }
+			h1 { margin: 0 0 8px; letter-spacing: .3px; }
+			.subtitle { color: var(--muted); margin: 0 0 24px; }
+			.grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+			@media (min-width: 960px) { .grid { grid-template-columns: 420px 1fr; } }
+			.card { background: rgba(18,26,43,0.9); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.35); overflow: hidden; }
+			.card-header { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; }
+			.card-header .title { font-weight: 600; }
+			.card-body { padding: 14px 16px; }
+			textarea { width: 100%; min-height: 130px; padding: 12px; font-size: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: #0e1526; color: var(--text); outline: none; resize: vertical; }
+			.controls { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+			button { padding: 10px 14px; font-size: 14px; cursor: pointer; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #00122b; font-weight: 600; }
+			button.secondary { background: transparent; color: var(--text); }
+			pre { background: #0e1526; padding: 14px; overflow: auto; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); min-height: 140px; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
+			.chat { display: flex; flex-direction: column; gap: 12px; max-height: 60vh; overflow-y: auto; padding: 12px; }
+			.msg { display: inline-block; max-width: 90%; padding: 10px 12px; border-radius: 12px; line-height: 1.35; white-space: pre-wrap; overflow-wrap: anywhere; }
+			.msg.user { align-self: flex-end; background: linear-gradient(135deg, #2a3a6a, #314b84); border: 1px solid rgba(255,255,255,.08); }
+			.msg.assistant { align-self: flex-start; background: #0e1526; border: 1px solid rgba(255,255,255,.06); }
+			.msg.error { background: #2a1420; border: 1px solid #61243a; }
+			.msg a { color: var(--accent); text-decoration: none; }
+			.kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: #0e1526; border: 1px solid rgba(255,255,255,.1); padding: 2px 6px; border-radius: 6px; }
+			.quick { display: grid; grid-template-columns: 1fr; gap: 8px; }
+			.quick button { text-align: left; }
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<h1>AI Personal Hub</h1>
+			<p class="subtitle">Ask anything. Your MCP tools (files, GitHub, YouTube, Gmail, Steam, summarize) can help.</p>
+			<div class="grid">
+				<div class="card">
+					<div class="card-header"><span class="title">Ask</span></div>
+					<div class="card-body">
+						<form id="ask-form">
+							<textarea name="query" id="query" placeholder="e.g., find my first 5 yt liked video"></textarea>
+							<div class="controls">
+								<button type="submit">Ask</button>
+								<button type="button" class="secondary" id="clear">Clear</button>
+							</div>
+						</form>
+						<div style="margin-top:12px">
+							<div class="quick">
+								<button type="button" data-fill="List my local notes">📁 List local notes</button>
+								<button type="button" data-fill="Open a.txt">📄 Open a.txt</button>
+								<button type="button" data-fill="find my first 5 yt liked video">🎬 Liked videos (5)</button>
+								<button type="button" data-fill="top 10 youtube liked videos">🎬 Liked videos (10)</button>
+								<button type="button" data-fill="list my liked songs on ytm">🎵 YT Music liked songs</button>
+								<button type="button" data-fill="Show my last 5 GitHub commits for repo weather">🐙 GitHub commits</button>
+								<button type="button" data-fill="Summarize my last 5 emails">📧 Summarize emails</button>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="card">
+					<div class="card-header"><span class="title">Conversation</span></div>
+					<div class="card-body">
+						<div id="chat" class="chat">
+							<div class="msg assistant">(awaiting input)</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script>
+			const form = document.getElementById('ask-form');
+			const chat = document.getElementById('chat');
+			const clearBtn = document.getElementById('clear');
+			const quickBtns = document.querySelectorAll('.quick button');
+
+			form.addEventListener('submit', async (e) => {
+				e.preventDefault();
+				const formData = new FormData(form);
+				appendMessage('user', formData.get('query'));
+				const res = await fetch('/ask', { method: 'POST', body: formData });
+				const data = await res.json();
+				appendAssistant(data);
+			});
+
+			clearBtn.addEventListener('click', () => {
+				document.getElementById('query').value = '';
+				chat.innerHTML = '<div class="msg assistant">(awaiting input)</div>';
+			});
+
+			quickBtns.forEach(btn => btn.addEventListener('click', () => {
+				document.getElementById('query').value = btn.getAttribute('data-fill');
+			}));
+
+			function linkify(text) {
+				return text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1<\/a>');
+			}
+
+			function appendMessage(role, content, isError = false) {
+				const div = document.createElement('div');
+				div.className = `msg ${role}${isError ? ' error' : ''}`;
+				div.innerHTML = linkify(String(content || ''));
+				chat.appendChild(div);
+				chat.scrollTop = chat.scrollHeight;
+			}
+
+			function appendAssistant(data) {
+				if (data == null) { appendMessage('assistant', '(no response)'); return; }
+				if (data.error) { appendMessage('assistant', `Error: ${data.error}`, true); return; }
+				const ans = data.answer !== undefined ? data.answer : data;
+				if (Array.isArray(ans)) {
+					const html = ans.map((item, i) => {
+						if (item && typeof item === 'object') {
+							const title = item.title || item.name || item.path || `Item ${i+1}`;
+							const url = item.url || (item.videoId ? `https://www.youtube.com/watch?v=${item.videoId}` : undefined);
+							return url ? `${i+1}. <a href="${url}" target="_blank" rel="noopener noreferrer">${title}</a>` : `${i+1}. ${title}`;
+						}
+						return `${i+1}. ${String(item)}`;
+					}).join('\n');
+					appendMessage('assistant', html);
+					return;
+				}
+				if (typeof ans === 'object') {
+					appendMessage('assistant', linkify(JSON.stringify(ans, null, 2)));
+					return;
+				}
+				appendMessage('assistant', ans);
+			}
+		</script>
+	</body>
+</html>
