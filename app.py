@@ -1,10 +1,36 @@
 from flask import Flask, render_template, request, jsonify
+from dotenv import load_dotenv, find_dotenv
+import io
 import os
 import re
 import requests
 from mcp_server.file_service import list_local_text_files, read_local_text_file
 from mcp_server.youtube_service import list_liked_videos, list_liked_songs
+from mcp_server.steam_service import list_owned_games, app_user_details, get_owned_count
 
+def _load_env_robust():
+	try:
+		path = find_dotenv()
+		if path:
+			load_dotenv(dotenv_path=path, encoding="utf-8")
+		else:
+			load_dotenv(encoding="utf-8")
+		return
+	except UnicodeDecodeError:
+		pass
+	# Fallback: manually read and feed via stream with lenient encodings
+	for enc in ("utf-8-sig", "utf-16", "latin-1"):
+		try:
+			from pathlib import Path
+			cand = find_dotenv() or ".env"
+			with open(cand, "rb") as f:
+				text = f.read().decode(enc)
+			load_dotenv(stream=io.StringIO(text))
+			return
+		except Exception:
+			continue
+
+_load_env_robust()
 app = Flask(__name__)
 
 
@@ -45,6 +71,26 @@ def ask():
 	if (("liked" in lq and "song" in lq) or ("ytm" in lq and "liked" in lq and "song" in lq) or ("youtube music" in lq and "liked" in lq)):
 		items = list_liked_songs(limit=limit)
 		return jsonify({"answer": items})
+
+	# Simple intents for Steam
+	if "steam" in lq and ("games" in lq or "list" in lq):
+		limit_match2 = re.search(r"(first|top)\s+(\d+)", lq)
+		limit2 = int(limit_match2.group(2)) if limit_match2 else 25
+		items = list_owned_games(limit=limit2)
+		return jsonify({"answer": items})
+	if "user details" in lq and "appid" in lq:
+		ids = re.findall(r"\b\d{3,7}\b", lq)
+		if ids:
+			data = app_user_details(appids=",".join(ids))
+			return jsonify({"answer": data})
+
+	# Steam: count owned games
+	if ("how many" in lq and "game" in lq) or ("games do i own" in lq):
+		data = get_owned_count()
+		# If dict with count, surface count directly for nicer chat rendering
+		if isinstance(data, dict) and "count" in data:
+			return jsonify({"answer": f"You own {data['count']} games on Steam."})
+		return jsonify({"answer": data})
 
 	# Call LM Studio (OpenAI-compatible API) if available
 	base_url = os.getenv("LM_STUDIO_BASE_URL", "http://localhost:1234")
