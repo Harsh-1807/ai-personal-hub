@@ -1,7 +1,8 @@
 from mcp.server.fastmcp import FastMCP
 from dotenv import load_dotenv, find_dotenv
 import io
-from . import file_service, github_service, youtube_service, email_service, steam_service, summarize_service
+from . import file_service, github_service, email_service, steam_service, summarize_service, ytmusic_service
+
 
 def _load_env_robust():
 	try:
@@ -24,11 +25,12 @@ def _load_env_robust():
 		except Exception:
 			continue
 
+
 _load_env_robust()
 server = FastMCP("personal-hub-server")
 
 # Register all services
-for svc in [file_service, github_service, youtube_service, email_service, steam_service, summarize_service]:
+for svc in [file_service, github_service, email_service, steam_service, summarize_service, ytmusic_service]:
 	svc.register(server)
 	print(f"Registered service: {svc.__name__}")
 

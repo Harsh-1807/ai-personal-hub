@@ -5,3 +5,4 @@ google-auth==2.33.0
 google-auth-oauthlib==1.2.1
 mcp==1.13.1   # latest stable version available
 python-dotenv==1.0.1
+ytmusicapi==1.11.1

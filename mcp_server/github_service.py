@@ -20,6 +20,22 @@ def register(server):
 		items = res if isinstance(res, list) else []
 		return [{"sha": c.get("sha"), "msg": c.get("commit", {}).get("message")} for c in items[:5]]
 
+	@server.tool("github_commits_paginated")
+	def github_commits_paginated(user: str, repo: str, page: int = 1, per_page: int = 100):
+		"""Fetch commits with pagination to allow full history retrieval."""
+		if per_page > 100:
+			per_page = 100
+		url = f"https://api.github.com/repos/{user}/{repo}/commits?page={page}&per_page={per_page}"
+		res = requests.get(url, headers=HEADERS).json()
+		items = res if isinstance(res, list) else []
+		return [{
+			"sha": c.get("sha"),
+			"msg": (c.get("commit", {}) or {}).get("message"),
+			"author": ((c.get("commit", {}) or {}).get("author", {}) or {}).get("name"),
+			"date": ((c.get("commit", {}) or {}).get("author", {}) or {}).get("date"),
+			"url": c.get("html_url")
+		} for c in items]
+
 	@server.tool("github_list_files")
 	def github_list_files(user: str, repo: str, path: str = ""):
 		# Uses Contents API

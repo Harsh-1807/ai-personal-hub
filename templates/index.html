@@ -43,13 +43,13 @@
 	<body>
 		<div class="container">
 			<h1>AI Personal Hub</h1>
-			<p class="subtitle">Ask anything. Your MCP tools (files, GitHub, YouTube, Gmail, Steam, summarize) can help.</p>
+			<p class="subtitle">Ask anything. Your MCP tools (files, GitHub, Gmail, Steam, summarize) can help.</p>
 			<div class="grid">
 				<div class="card">
 					<div class="card-header"><span class="title">Ask</span></div>
 					<div class="card-body">
 						<form id="ask-form">
-							<textarea name="query" id="query" placeholder="e.g., find my first 5 yt liked video"></textarea>
+							<textarea name="query" id="query" placeholder="e.g., use mcp to list all my steam games"></textarea>
 							<div class="controls">
 								<button type="submit">Ask</button>
 								<button type="button" class="secondary" id="clear">Clear</button>
@@ -57,12 +57,9 @@
 						</form>
 						<div style="margin-top:12px">
 							<div class="quick">
-								<button type="button" data-fill="List my local notes">📁 List local notes</button>
-								<button type="button" data-fill="Open a.txt">📄 Open a.txt</button>
-								<button type="button" data-fill="find my first 5 yt liked video">🎬 Liked videos (5)</button>
-								<button type="button" data-fill="top 10 youtube liked videos">🎬 Liked videos (10)</button>
-								<button type="button" data-fill="list my liked songs on ytm">🎵 YT Music liked songs</button>
-								<button type="button" data-fill="Show my last 5 GitHub commits for repo weather">🐙 GitHub commits</button>
+								<button type="button" data-fill="Use MCP steam_all_games and list names alphabetically">🎮 List ALL Steam games (MCP)</button>
+								<button type="button" data-fill="Use MCP ytm_liked_songs_free limit 25 and summarize top genres">🎵 YT Music liked (MCP)</button>
+								<button type="button" data-fill="Use MCP github_commits_paginated user $GITHUB_USER repo $GITHUB_REPO page 1 per_page 100 and summarize recent work">🐙 GitHub commits (MCP)</button>
 								<button type="button" data-fill="Summarize my last 5 emails">📧 Summarize emails</button>
 							</div>
 						</div>
